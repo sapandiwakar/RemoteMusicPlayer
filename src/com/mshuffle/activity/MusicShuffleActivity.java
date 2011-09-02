@@ -1,4 +1,6 @@
-package com.mshuffle;
+package com.mshuffle.activity;
+
+import com.mshuffle.R;
 
 import android.app.TabActivity;
 import android.content.Intent;
@@ -26,12 +28,12 @@ public class MusicShuffleActivity extends TabActivity {
 		tabHost.addTab(spec);
 
 		// Do the same for the other tabs
-		intent = new Intent().setClass(this, ShuffleActivity.class);
+		intent = new Intent().setClass(this, MusicActivity.class);
 		spec = tabHost.newTabSpec("music").setIndicator("Music", res.getDrawable(R.drawable.ic_tab_shuffle)).setContent(intent);
 		tabHost.addTab(spec);
 
-		intent = new Intent().setClass(this, LikeActivity.class);
-		spec = tabHost.newTabSpec("like").setIndicator("Like", res.getDrawable(R.drawable.ic_tab_shuffle)).setContent(intent);
+		intent = new Intent().setClass(this, RecentActivityActivity.class);
+		spec = tabHost.newTabSpec("recent").setIndicator("Recent Activity", res.getDrawable(R.drawable.ic_tab_shuffle)).setContent(intent);
 		tabHost.addTab(spec);
 
 		tabHost.setCurrentTab(2);

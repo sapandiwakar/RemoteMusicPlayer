@@ -16,8 +16,14 @@ public final class R {
         public static final int ic_tab_shuffle=0x7f020002;
         public static final int icon=0x7f020003;
     }
+    public static final class id {
+        public static final int activitywebview=0x7f050001;
+        public static final int webview=0x7f050000;
+    }
     public static final class layout {
         public static final int main=0x7f030000;
+        public static final int moods=0x7f030001;
+        public static final int recentactivity=0x7f030002;
     }
     public static final class string {
         public static final int app_name=0x7f040001;

@@ -4,6 +4,7 @@
       android:versionCode="1"
       android:versionName="1.0">
     <uses-sdk android:minSdkVersion="7" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".MusicShuffleActivity"
@@ -14,12 +15,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".MoodsActivity"
+                  android:label="@string/app_name" android:theme="@android:style/Theme.NoTitleBar"/>
+            
+        <activity android:name=".MusicActivity"
                   android:label="@string/app_name"/>
             
-        <activity android:name=".ShuffleActivity"
-                  android:label="@string/app_name"/>
-            
-        <activity android:name=".LikeActivity"
+        <activity android:name=".activity.RecentActivityActivity"
                   android:label="@string/app_name"/>
             
 
