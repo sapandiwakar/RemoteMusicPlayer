@@ -1,4 +1,4 @@
-package com.mshuffle.activity;
+package com.mshuffle;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -15,5 +15,9 @@ public class MusicActivity extends Activity {
 		TextView textView = new TextView(this);
 		textView.setText("The shuffle tab");
 		setContentView(textView);
+		/*
+		 * MusicService musicService = new MusicService(); getIntent().setAction("PLAY");
+		 * musicService.startService(getIntent());
+		 */
 	}
 }

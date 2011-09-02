@@ -1,6 +1,4 @@
-package com.mshuffle.activity;
-
-import com.mshuffle.R;
+package com.mshuffle;
 
 import android.app.TabActivity;
 import android.content.Intent;
