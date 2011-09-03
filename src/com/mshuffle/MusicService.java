@@ -5,6 +5,9 @@ package com.mshuffle;
 
 import java.io.IOException;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -19,12 +22,21 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	private static final String ACTION_PLAY = "PLAY";
 	private static String mUrl;
+	NotificationManager mNotificationManager;
+	Notification mNotification = null;
+
+	// The ID we use for the notification (the onscreen alert that appears at the notification
+	// area at the top of the screen as an icon -- and as text as well if the user expands the
+	// notification area).
+	final int NOTIFICATION_ID = 1;
 
 	private static MusicService mInstance = null;
 
 	@Override
 	public void onCreate() {
 		mInstance = this;
+		mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
 	}
 
 	public class LocalBinder extends Binder {
@@ -52,6 +64,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	State mState = State.Retrieving;
 	private int mBufferPosition;
+	private static String mSongTitle;
+	private static String mSongPicUrl;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -86,6 +100,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		}
 		mMediaPlayer.prepareAsync(); // prepare async to not block main thread
 		mState = State.Preparing;
+		setUpAsForeground(mSongTitle + " (loading)");
 	}
 
 	public void restartMusic() {
@@ -104,6 +119,33 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	public void onPrepared(MediaPlayer player) {
 		mState = State.Playing;
 		mMediaPlayer.start();
+		setUpAsForeground(mSongTitle + " (playing)");
+	}
+
+	/** Updates the notification. */
+	void updateNotification(String text) {
+		PendingIntent pi =
+				PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MusicActivity.class),
+						PendingIntent.FLAG_UPDATE_CURRENT);
+		mNotification.setLatestEventInfo(getApplicationContext(), "RandomMusicPlayer", text, pi);
+		mNotificationManager.notify(NOTIFICATION_ID, mNotification);
+	}
+
+	/**
+	 * Configures service as a foreground service. A foreground service is a service that's doing something the user is
+	 * actively aware of (such as playing music), and must appear to the user as a notification. That's why we create
+	 * the notification here.
+	 */
+	void setUpAsForeground(String text) {
+		PendingIntent pi =
+				PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MusicActivity.class),
+						PendingIntent.FLAG_UPDATE_CURRENT);
+		mNotification = new Notification();
+		mNotification.tickerText = text;
+		mNotification.icon = R.drawable.ic_start_playing;
+		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+		mNotification.setLatestEventInfo(getApplicationContext(), "RandomMusicPlayer", text, pi);
+		startForeground(NOTIFICATION_ID, mNotification);
 	}
 
 	/**
@@ -136,6 +178,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		if (mState.equals(State.Playing)) {
 			mMediaPlayer.pause();
 			mState = State.Paused;
+			updateNotification(mSongTitle + " (paused)");
 		}
 	}
 
@@ -143,6 +186,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
 			mMediaPlayer.start();
 			mState = State.Playing;
+			updateNotification(mSongTitle + " (playing)");
 		}
 	}
 
@@ -185,7 +229,17 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		return mInstance;
 	}
 
-	public static void setUrl(String url) {
+	public static void setSong(String url, String title, String songPicUrl) {
 		mUrl = url;
+		mSongTitle = title;
+		mSongPicUrl = songPicUrl;
+	}
+
+	public String getSongTitle() {
+		return mSongTitle;
+	}
+
+	public String getSongPicUrl() {
+		return mSongPicUrl;
 	}
 }
