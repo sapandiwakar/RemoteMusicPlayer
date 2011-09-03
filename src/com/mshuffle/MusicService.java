@@ -18,7 +18,7 @@ import android.os.IBinder;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener {
 
 	private static final String ACTION_PLAY = "PLAY";
-	private static String url = "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg";
+	private static String mUrl;
 
 	private static MusicService mInstance = null;
 
@@ -59,33 +59,39 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			mMediaPlayer = new MediaPlayer(); // initialize it here
 			mMediaPlayer.setOnPreparedListener(this);
 			mMediaPlayer.setOnErrorListener(this);
-
 			mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
 				@Override
 				public void onBufferingUpdate(MediaPlayer mp, int progress) {
 					setBufferPosition(progress);
 				}
 			});
-
 			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-			try {
-				mMediaPlayer.setDataSource(url);
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalStateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			mMediaPlayer.prepareAsync(); // prepare async to not block main thread
-			mState = State.Preparing;
-
+			initMediaPlayer();
 		}
 		return START_STICKY;
+	}
+
+	private void initMediaPlayer() {
+		try {
+			mMediaPlayer.setDataSource(mUrl);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		mMediaPlayer.prepareAsync(); // prepare async to not block main thread
+		mState = State.Preparing;
+	}
+
+	public void restartMusic() {
+		mState = State.Retrieving;
+		mMediaPlayer.reset();
+		initMediaPlayer();
 	}
 
 	protected void setBufferPosition(int progress) {
@@ -177,5 +183,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	public static MusicService getInstance() {
 		return mInstance;
+	}
+
+	public static void setUrl(String url) {
+		mUrl = url;
 	}
 }

@@ -4,6 +4,7 @@
 package com.mshuffle;
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.webkit.WebView;
 
@@ -17,6 +18,7 @@ public class MoodsActivity extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Resources res = getResources();
 		/*
 		 * TextView textView = new TextView(this); textView.setText("The moods tab"); setContentView(textView);
 		 */
@@ -25,7 +27,7 @@ public class MoodsActivity extends Activity {
 
 		mWebView = (WebView) findViewById(R.id.webview);
 		mWebView.getSettings().setJavaScriptEnabled(true);
-		mWebView.loadUrl("http://shoutz.in/forms/popups/moods.popup.forms.php");
+		mWebView.loadUrl(res.getString(R.string.host) + "forms/popups/moods.popup.forms.php");
 
 	}
 }
