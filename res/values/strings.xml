@@ -2,4 +2,7 @@
 <resources>
     <string name="hello">Hello World, MusicShuffleActivity!</string>
     <string name="app_name">MusicShuffle</string>
+    <string name="host">http://shoutz.in/</string>
+    <string name="shuffle">Shuffle Next</string>
+    <string name="json">{\"songid\":\"304\",\"name\":\"Teenage Dream\",\"album\":\"43\",\"genre\":\"Rock\",\"artist\":\"Katy Perry\",\"duration\":\"0\",\"link\":\"http://showstalker.net/wp-content/video/katy-perry-et.mp3\",\"liked\":\"5\",\"lang\":\"2\",\"play_count\":\"120\",\"type\":\"audio\",\"uploadedby\":\"0\",\"uploaded\":\"2011-05-01 01:41:36\",\"albumid\":\"43\",\"pic_url\":\"http://userserve-ak.last.fm/serve/174s/61861615.png\",\"songname\":\"E.T.\",\"albumname\":\"Teenage Dream\"}</string>
 </resources>
