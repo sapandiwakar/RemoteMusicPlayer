@@ -9,6 +9,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Binder;
 import android.os.IBinder;
 
 /**
@@ -19,8 +20,23 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private static final String ACTION_PLAY = "PLAY";
 	private static String url = "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg";
 
+	private static MusicService mInstance = null;
+
+	@Override
+	public void onCreate() {
+		mInstance = this;
+	}
+
+	public class LocalBinder extends Binder {
+		MusicService getService() {
+			return MusicService.this;
+		}
+	}
+
 	// The Media Player
 	MediaPlayer mMediaPlayer = null;
+
+	private final IBinder mBinder = new LocalBinder();
 
 	// indicates the state our service:
 	enum State {
@@ -35,14 +51,22 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	};
 
 	State mState = State.Retrieving;
+	private int mBufferPosition;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-
 		if (intent.getAction().equals(ACTION_PLAY)) {
 			mMediaPlayer = new MediaPlayer(); // initialize it here
 			mMediaPlayer.setOnPreparedListener(this);
 			mMediaPlayer.setOnErrorListener(this);
+
+			mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+				@Override
+				public void onBufferingUpdate(MediaPlayer mp, int progress) {
+					setBufferPosition(progress);
+				}
+			});
+
 			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 			try {
 				mMediaPlayer.setDataSource(url);
@@ -58,14 +82,22 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			}
 
 			mMediaPlayer.prepareAsync(); // prepare async to not block main thread
+			mState = State.Preparing;
+
 		}
-		return 0;
+		return START_STICKY;
+	}
+
+	protected void setBufferPosition(int progress) {
+		mBufferPosition = progress;
+
 	}
 
 	/** Called when MediaPlayer is ready */
 	@Override
 	public void onPrepared(MediaPlayer player) {
-		player.start();
+		mState = State.Playing;
+		mMediaPlayer.start();
 	}
 
 	/**
@@ -73,8 +105,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	 */
 	@Override
 	public IBinder onBind(Intent arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		return mBinder;
 	}
 
 	@Override
@@ -88,6 +119,63 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		if (mMediaPlayer != null) {
 			mMediaPlayer.release();
 		}
+		mState = State.Retrieving;
 	}
 
+	public MediaPlayer getMediaPlayer() {
+		return mMediaPlayer;
+	}
+
+	public void pauseMusic() {
+		if (mState.equals(State.Playing)) {
+			mMediaPlayer.pause();
+			mState = State.Paused;
+		}
+	}
+
+	public void startMusic() {
+		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
+			mMediaPlayer.start();
+			mState = State.Playing;
+		}
+	}
+
+	public boolean isPlaying() {
+		if (mState.equals(State.Playing)) {
+			return true;
+		}
+		return false;
+	}
+
+	public int getMusicDuration() {
+		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
+			return mMediaPlayer.getDuration();
+		}
+		return 0;
+	}
+
+	public int getCurrentPosition() {
+		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
+			return mMediaPlayer.getCurrentPosition();
+		}
+		return 0;
+	}
+
+	public int getBufferPercentage() {
+		if (mState.equals(State.Preparing)) {
+			return mBufferPosition;
+		}
+		return 0;
+	}
+
+	public void seekMusicTo(int pos) {
+		if (mState.equals(State.Playing) || mState.equals(State.Paused)) {
+			mMediaPlayer.seekTo(pos);
+		}
+
+	}
+
+	public static MusicService getInstance() {
+		return mInstance;
+	}
 }

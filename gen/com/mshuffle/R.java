@@ -15,6 +15,7 @@ public final class R {
         public static final int ic_tab_rec_white=0x7f020001;
         public static final int ic_tab_shuffle=0x7f020002;
         public static final int icon=0x7f020003;
+        public static final int test=0x7f020004;
     }
     public static final class id {
         public static final int activitywebview=0x7f050001;

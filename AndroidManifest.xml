@@ -22,7 +22,12 @@
             
         <activity android:name=".RecentActivityActivity"
                   android:label="@string/app_name"/>
-            
+        
+        <service android:name=".MusicService">
+            <intent-filter>
+                <action android:name="PLAY" />
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>
