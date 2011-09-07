@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,27 +16,35 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.webkit.WebView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.MediaController.MediaPlayerControl;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 /**
  * @author Sapan
  */
-public class MusicActivity extends Activity implements MediaPlayerControl {
+public class MusicActivity extends Activity implements MediaPlayerControl, SeekBar.OnSeekBarChangeListener {
 
 	MediaController ctrl;
 	ImageView songPicture;
 	String mUrl;
 	Resources res;
 	TextView songNameView;
+	TextView musicCurLoc;
+	TextView musicDuration;
+	SeekBar musicSeekBar;
+	ToggleButton playPauseButton;
 
 	String mSongPicUrl = null;
 	private String mSongTitle = null;
+	protected boolean musicThreadFinished = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -53,12 +62,76 @@ public class MusicActivity extends Activity implements MediaPlayerControl {
 		ctrl.setMediaPlayer(this);
 		ctrl.setAnchorView(songPicture);
 
+		musicCurLoc = (TextView) findViewById(R.id.musicCurrentLoc);
+		musicDuration = (TextView) findViewById(R.id.musicDuration);
+		musicSeekBar = (SeekBar) findViewById(R.id.musicSeekBar);
+		playPauseButton = (ToggleButton) findViewById(R.id.playPauseButton);
+		musicSeekBar.setOnSeekBarChangeListener(this);
+
+		playPauseButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// Perform action on clicks
+				if (playPauseButton.isChecked()) { // Checked -> Pause icon visible
+					start();
+				} else { // Unchecked -> Play icon visible
+					pause();
+				}
+			}
+		});
+
 		button.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				shuffleNext();
 			}
 		});
+
+		WebView upNextSong = (WebView) findViewById(R.id.up_next_song);
+		upNextSong.getSettings().setJavaScriptEnabled(true);
+		upNextSong.loadUrl(res.getString(R.string.host) + "services/suggestion.php?v=2.0&a=suggestion.upnext");
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				int currentPosition = 0;
+				while (!musicThreadFinished) {
+					try {
+						Thread.sleep(1000);
+						currentPosition = getCurrentPosition();
+					} catch (InterruptedException e) {
+						return;
+					} catch (Exception e) {
+						return;
+					}
+					final int total = getDuration();
+
+					final String totalTime = getAsTime(total);
+					final String curTime = getAsTime(currentPosition);
+
+					musicSeekBar.setMax(total);
+					musicSeekBar.setProgress(currentPosition);
+					musicSeekBar.setSecondaryProgress(getBufferPercentage());
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							if (isPlaying()) {
+								if (!playPauseButton.isChecked()) {
+									playPauseButton.setChecked(true);
+								}
+							} else {
+								if (playPauseButton.isChecked()) {
+									playPauseButton.setChecked(false);
+								}
+							}
+							musicDuration.setText(totalTime);
+							musicCurLoc.setText(curTime);
+						}
+					});
+
+				}
+			}
+		}).start();
 
 		if (MusicService.getInstance() != null) {
 			// Service already running
@@ -95,6 +168,12 @@ public class MusicActivity extends Activity implements MediaPlayerControl {
 
 	}
 
+	@SuppressWarnings("boxing")
+	protected String getAsTime(int t) {
+		return String.format("%02d:%02d", TimeUnit.MILLISECONDS.toSeconds(t) / 60, TimeUnit.MILLISECONDS.toSeconds(t) - TimeUnit.MILLISECONDS.toSeconds(t) / 60
+				* 60);
+	}
+
 	private void shuffleNext() {
 		String shuffleUrl = R.string.host + "services/music.php?v=2.0&a=shuffle.next";
 		String musicJson = res.getString(R.string.json);
@@ -128,12 +207,12 @@ public class MusicActivity extends Activity implements MediaPlayerControl {
 		}
 	}
 
-	@Override
-	public boolean onTouchEvent(MotionEvent event) {
-		// the MediaController will hide after 3 seconds - tap the screen to make it appear again
-		ctrl.show();
-		return false;
-	}
+	// @Override
+	// public boolean onTouchEvent(MotionEvent event) {
+	// // the MediaController will hide after 3 seconds - tap the screen to make it appear again
+	// ctrl.show();
+	// return false;
+	// }
 
 	@Override
 	public boolean canPause() {
@@ -202,5 +281,24 @@ public class MusicActivity extends Activity implements MediaPlayerControl {
 		if (MusicService.getInstance() != null) {
 			MusicService.getInstance().startMusic();
 		}
+	}
+
+	@Override
+	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+		if (fromUser) {
+			seekTo(progress);
+		}
+	}
+
+	@Override
+	public void onStartTrackingTouch(SeekBar seekBar) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onStopTrackingTouch(SeekBar seekBar) {
+		// TODO Auto-generated method stub
+
 	}
 }

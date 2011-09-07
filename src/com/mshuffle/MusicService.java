@@ -18,7 +18,7 @@ import android.os.IBinder;
 /**
  * @author Sapan
  */
-public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener {
+public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
 
 	private static final String ACTION_PLAY = "PLAY";
 	private static String mUrl;
@@ -73,12 +73,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			mMediaPlayer = new MediaPlayer(); // initialize it here
 			mMediaPlayer.setOnPreparedListener(this);
 			mMediaPlayer.setOnErrorListener(this);
-			mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-				@Override
-				public void onBufferingUpdate(MediaPlayer mp, int progress) {
-					setBufferPosition(progress);
-				}
-			});
+			mMediaPlayer.setOnBufferingUpdateListener(this);
 			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 			initMediaPlayer();
 		}
@@ -111,7 +106,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	protected void setBufferPosition(int progress) {
 		mBufferPosition = progress;
-
 	}
 
 	/** Called when MediaPlayer is ready */
@@ -127,7 +121,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		PendingIntent pi =
 				PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MusicActivity.class),
 						PendingIntent.FLAG_UPDATE_CURRENT);
-		mNotification.setLatestEventInfo(getApplicationContext(), "RandomMusicPlayer", text, pi);
+		mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name), text, pi);
 		mNotificationManager.notify(NOTIFICATION_ID, mNotification);
 	}
 
@@ -142,9 +136,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 						PendingIntent.FLAG_UPDATE_CURRENT);
 		mNotification = new Notification();
 		mNotification.tickerText = text;
-		mNotification.icon = R.drawable.ic_start_playing;
+		mNotification.icon = R.drawable.ic_mshuffle_icon;
 		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		mNotification.setLatestEventInfo(getApplicationContext(), "RandomMusicPlayer", text, pi);
+		mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name), text, pi);
 		startForeground(NOTIFICATION_ID, mNotification);
 	}
 
@@ -212,10 +206,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public int getBufferPercentage() {
-		if (mState.equals(State.Preparing)) {
-			return mBufferPosition;
-		}
-		return 0;
+		// if (mState.equals(State.Preparing)) {
+		return mBufferPosition;
+		// }
+		// return getMusicDuration();
 	}
 
 	public void seekMusicTo(int pos) {
@@ -241,5 +235,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	public String getSongPicUrl() {
 		return mSongPicUrl;
+	}
+
+	@Override
+	public void onBufferingUpdate(MediaPlayer mp, int percent) {
+		setBufferPosition(percent * getMusicDuration() / 100);
 	}
 }
