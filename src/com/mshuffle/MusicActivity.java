@@ -41,6 +41,7 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 	TextView musicDuration;
 	SeekBar musicSeekBar;
 	ToggleButton playPauseButton;
+	ImageButton shuffleButton;
 
 	String mSongPicUrl = null;
 	private String mSongTitle = null;
@@ -51,7 +52,7 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.music);
 
-		final ImageButton button = (ImageButton) findViewById(R.id.shufflebutton);
+		shuffleButton = (ImageButton) findViewById(R.id.shufflebutton);
 
 		res = getResources(); // Resource object to get Drawables
 
@@ -80,7 +81,7 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 			}
 		});
 
-		button.setOnClickListener(new View.OnClickListener() {
+		shuffleButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				shuffleNext();

@@ -9,8 +9,14 @@
 	     <ImageView 
 	        android:id="@+id/thumbnail"
 	        android:layout_height="wrap_content"
-		    android:layout_width="fill_parent"
+		    android:layout_width="wrap_content"
+		    android:layout_gravity="center"
+		    android:adjustViewBounds="true"
+		    android:maxHeight="175dp"
+		    android:minHeight="175dp"
+		    android:scaleType="fitCenter"
 		    />
+		 <TextView android:gravity="center_vertical|center_horizontal" android:layout_height="wrap_content" android:text="TextView" android:layout_width="fill_parent" android:id="@+id/songName"></TextView>
 	     <LinearLayout android:layout_height="wrap_content" android:id="@+id/linearLayout1" android:layout_width="fill_parent">
 	     	<ToggleButton android:textOn="" android:textOff="" android:layout_marginLeft="5px" android:id="@+id/playPauseButton" android:layout_width="30px" android:background="@drawable/ic_play_pause" android:layout_marginTop="5px" android:layout_height="30px"></ToggleButton>
 	     	<TextView android:id="@+id/musicCurrentLoc" android:layout_marginLeft="5px" android:layout_marginTop="5px" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
@@ -18,8 +24,5 @@
 	     	<TextView android:id="@+id/musicDuration" android:layout_marginLeft="5px" android:layout_marginTop="5px" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 	     	<ImageButton android:layout_marginLeft="5px" android:layout_marginTop="5px" android:src="@drawable/ic_music_shuffle" android:layout_height="35px" android:layout_width="35px" android:id="@+id/shufflebutton"></ImageButton>
 	     </LinearLayout>
-	     
-    
-	     <TextView android:layout_height="wrap_content" android:text="TextView" android:layout_width="fill_parent" android:id="@+id/songName"></TextView>
 	     <android.webkit.WebView android:id="@+id/up_next_song" android:layout_width="fill_parent" android:layout_height="wrap_content"></android.webkit.WebView>
      </LinearLayout>

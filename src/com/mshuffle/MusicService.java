@@ -87,13 +87,33 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
+			// TODO Workaround for bug: http://code.google.com/p/android/issues/detail?id=957
+			mMediaPlayer.reset();
+			try {
+				mMediaPlayer.setDataSource(mUrl);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		mMediaPlayer.prepareAsync(); // prepare async to not block main thread
+
+		try {
+			mMediaPlayer.prepareAsync(); // prepare async to not block main thread
+		} catch (IllegalStateException e) {
+			// TODO Workaround for bug: http://code.google.com/p/android/issues/detail?id=957
+			mMediaPlayer.reset();
+			try {
+				mMediaPlayer.setDataSource(mUrl);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			mMediaPlayer.prepareAsync();
+		}
 		mState = State.Preparing;
 		setUpAsForeground(mSongTitle + " (loading)");
 	}
