@@ -1,4 +1,4 @@
-package com.mshuffle;
+package com.remotemplayer;
 
 import android.app.TabActivity;
 import android.content.Intent;
@@ -19,19 +19,8 @@ public class MusicShuffleActivity extends TabActivity {
 		Intent intent; // Reusable Intent for each tab
 
 		// Create an Intent to launch an Activity for the tab (to be reused)
-		intent = new Intent().setClass(this, MoodsActivity.class);
-
-		// Initialize a TabSpec for each tab and add it to the TabHost
-		spec = tabHost.newTabSpec("moods").setIndicator("Moods", res.getDrawable(R.drawable.ic_tab_shuffle)).setContent(intent);
-		tabHost.addTab(spec);
-
-		// Do the same for the other tabs
 		intent = new Intent().setClass(this, MusicActivity.class);
 		spec = tabHost.newTabSpec("music").setIndicator("Music", res.getDrawable(R.drawable.ic_tab_shuffle)).setContent(intent);
-		tabHost.addTab(spec);
-
-		intent = new Intent().setClass(this, RecentActivityActivity.class);
-		spec = tabHost.newTabSpec("recent").setIndicator("Recent Activity", res.getDrawable(R.drawable.ic_tab_shuffle)).setContent(intent);
 		tabHost.addTab(spec);
 
 		tabHost.setCurrentTab(2);

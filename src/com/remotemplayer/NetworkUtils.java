@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.mshuffle;
+package com.remotemplayer;
 
 import java.io.InputStream;
 

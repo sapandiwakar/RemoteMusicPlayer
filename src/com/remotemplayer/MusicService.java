@@ -1,12 +1,10 @@
 /**
  * 
  */
-package com.mshuffle;
+package com.remotemplayer;
 
 import java.io.IOException;
 
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
@@ -22,8 +20,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	private static final String ACTION_PLAY = "PLAY";
 	private static String mUrl;
-	NotificationManager mNotificationManager;
-	Notification mNotification = null;
+	// NotificationManager mNotificationManager;
+	// Notification mNotification = null;
 
 	// The ID we use for the notification (the onscreen alert that appears at the notification
 	// area at the top of the screen as an icon -- and as text as well if the user expands the
@@ -35,7 +33,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	@Override
 	public void onCreate() {
 		mInstance = this;
-		mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		// mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 	}
 
@@ -141,8 +139,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		PendingIntent pi =
 				PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MusicActivity.class),
 						PendingIntent.FLAG_UPDATE_CURRENT);
-		mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name), text, pi);
-		mNotificationManager.notify(NOTIFICATION_ID, mNotification);
+		// mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name), text,
+		// pi);
+		// mNotificationManager.notify(NOTIFICATION_ID, mNotification);
 	}
 
 	/**
@@ -154,12 +153,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		PendingIntent pi =
 				PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MusicActivity.class),
 						PendingIntent.FLAG_UPDATE_CURRENT);
-		mNotification = new Notification();
-		mNotification.tickerText = text;
-		mNotification.icon = R.drawable.ic_mshuffle_icon;
-		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name), text, pi);
-		startForeground(NOTIFICATION_ID, mNotification);
+		// mNotification = new Notification();
+		// mNotification.tickerText = text;
+		// mNotification.icon = R.drawable.ic_mshuffle_icon;
+		// mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+		// mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name), text,
+		// pi);
+		// startForeground(NOTIFICATION_ID, mNotification);
 	}
 
 	/**

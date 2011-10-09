@@ -1,4 +1,4 @@
-package com.mshuffle;
+package com.remotemplayer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.remotemplayer.R;
 
 import android.app.Activity;
 import android.content.Intent;

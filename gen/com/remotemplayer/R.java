@@ -5,7 +5,7 @@
  * should not be modified by hand.
  */
 
-package com.mshuffle;
+package com.remotemplayer;
 
 public final class R {
     public static final class attr {
