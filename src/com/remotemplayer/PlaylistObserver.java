@@ -3,6 +3,15 @@
  */
 package com.remotemplayer;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+
 import android.os.FileObserver;
 import android.util.Log;
 
@@ -24,7 +33,43 @@ public class PlaylistObserver extends FileObserver {
 		Log.i("PlaylistObserver", "Some event");
 		if (event == FileObserver.MODIFY) {
 			Log.i("PlaylistObserver", absolutePath + " modified");
-			musicService.startMusic();
+
+			InputStream instream;
+			try {
+				instream = new FileInputStream(absolutePath);
+				// if file the available for reading
+				if (instream != null) {
+					// prepare the file for reading
+					InputStreamReader inputreader = new InputStreamReader(instream);
+					BufferedReader buffreader = new BufferedReader(inputreader);
+
+					String line;
+
+					// read every line of the file into the line-variable, on line at the time
+					List<String> playlist = new ArrayList<String>();
+					boolean flag = true;
+					do {
+						try {
+							line = buffreader.readLine();
+							if (line == null) {
+								flag = false;
+							}
+							playlist.add(line);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+					} while (flag);
+
+					musicService.setPlaylist(playlist);
+				}
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
+			// musicService.startMusic();
 		}
 
 		if (path == null) {

@@ -9,8 +9,6 @@ import java.util.concurrent.TimeUnit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.remotemplayer.R;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -159,7 +157,7 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 
 		mUrl = "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg";
 
-		MusicService.setSong(mUrl, "Temp Song", null);
+		// MusicService.setSong(mUrl, "Temp Song", null);
 
 		new Thread(new Runnable() {
 
@@ -192,7 +190,7 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 			if (MusicService.getInstance() != null && musicDetails != null) {
 				mSongTitle = musicDetails.getString("name");
 				mSongPicUrl = musicDetails.getString("pic_url");
-				MusicService.setSong(musicDetails.getString("link"), mSongTitle, mSongPicUrl);
+				// MusicService.setSong(musicDetails.getString("link"), mSongTitle, mSongPicUrl);
 				Bitmap bitmap = BitmapFactory.decodeStream((InputStream) new URL(mSongPicUrl).getContent());
 				songPicture.setImageBitmap(bitmap);
 				MusicService.getInstance().restartMusic();

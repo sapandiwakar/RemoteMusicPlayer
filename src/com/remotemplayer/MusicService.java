@@ -4,6 +4,7 @@
 package com.remotemplayer;
 
 import java.io.IOException;
+import java.util.List;
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -21,6 +22,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	private static final String ACTION_PLAY = "PLAY";
 	private static final String PLAYLIST_PATH = "/sdcard/My SugarSync Folders/Uploaded by Email/playlist.txt";
+	private static final String MUSIC_PATH = "/sdcard/music/";
 
 	private static String mUrl;
 	// NotificationManager mNotificationManager;
@@ -67,6 +69,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	State mState = State.Retrieving;
 	private int mBufferPosition;
+	private List<String> playlist;
 	private static String mSongTitle;
 	private static String mSongPicUrl;
 
@@ -78,7 +81,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			mMediaPlayer.setOnErrorListener(this);
 			mMediaPlayer.setOnBufferingUpdateListener(this);
 			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-			initMediaPlayer();
+			// initMediaPlayer();
 		}
 		playlistObserver = new PlaylistObserver(PLAYLIST_PATH);
 		playlistObserver.setService(this);
@@ -218,6 +221,20 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			return true;
 		}
 		return false;
+	}
+
+	public void setPlaylist(List<String> playlist) {
+		this.playlist = playlist;
+		startPlayingFromPlayList();
+	}
+
+	private void startPlayingFromPlayList() {
+		if (playlist.size() == 0) {
+			return;
+		}
+		int currentSongIndex = 0;
+		mUrl = this.MUSIC_PATH + playlist.get(currentSongIndex);
+		initMediaPlayer();
 	}
 
 	public int getMusicDuration() {
