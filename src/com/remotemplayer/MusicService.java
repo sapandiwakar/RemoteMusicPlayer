@@ -12,6 +12,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
 
 /**
  * @author Sapan
@@ -19,6 +20,8 @@ import android.os.IBinder;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
 
 	private static final String ACTION_PLAY = "PLAY";
+	private static final String PLAYLIST_PATH = "/sdcard/My SugarSync Folders/Uploaded by Email/playlist.txt";
+
 	private static String mUrl;
 	// NotificationManager mNotificationManager;
 	// Notification mNotification = null;
@@ -27,12 +30,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	// area at the top of the screen as an icon -- and as text as well if the user expands the
 	// notification area).
 	final int NOTIFICATION_ID = 1;
+	private static PlaylistObserver playlistObserver;
 
 	private static MusicService mInstance = null;
 
 	@Override
 	public void onCreate() {
 		mInstance = this;
+
 		// mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 	}
@@ -75,6 +80,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 			initMediaPlayer();
 		}
+		playlistObserver = new PlaylistObserver(PLAYLIST_PATH);
+		playlistObserver.setService(this);
+		playlistObserver.startWatching();
+		Log.i("MusicService", "STarted watching for file events");
 		return START_STICKY;
 	}
 
