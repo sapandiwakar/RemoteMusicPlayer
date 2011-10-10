@@ -3,6 +3,7 @@
  */
 package com.remotemplayer;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -18,7 +20,8 @@ import android.util.Log;
 /**
  * @author Sapan
  */
-public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener {
+public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener,
+		OnCompletionListener {
 
 	private static final String ACTION_PLAY = "PLAY";
 	private static final String PLAYLIST_PATH = "/sdcard/My SugarSync Folders/Uploaded by Email/playlist.txt";
@@ -70,6 +73,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	State mState = State.Retrieving;
 	private int mBufferPosition;
 	private List<String> playlist;
+	private int currentSongIndex;
 	private static String mSongTitle;
 	private static String mSongPicUrl;
 
@@ -78,6 +82,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		if (intent.getAction().equals(ACTION_PLAY)) {
 			mMediaPlayer = new MediaPlayer(); // initialize it here
 			mMediaPlayer.setOnPreparedListener(this);
+			mMediaPlayer.setOnCompletionListener(this);
 			mMediaPlayer.setOnErrorListener(this);
 			mMediaPlayer.setOnBufferingUpdateListener(this);
 			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -232,9 +237,22 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		if (playlist.size() == 0) {
 			return;
 		}
-		int currentSongIndex = 0;
-		mUrl = this.MUSIC_PATH + playlist.get(currentSongIndex);
-		initMediaPlayer();
+		currentSongIndex = 0;
+		playSong(currentSongIndex);
+
+	}
+
+	private void playSong(int currentSongIndex) {
+		if (currentSongIndex < playlist.size()) {
+			mUrl = this.MUSIC_PATH + playlist.get(currentSongIndex);
+			File file = new File(mUrl);
+			if (file.exists()) {
+				initMediaPlayer();
+			} else {
+				currentSongIndex++;
+				playSong(currentSongIndex);
+			}
+		}
 	}
 
 	public int getMusicDuration() {
@@ -286,5 +304,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	@Override
 	public void onBufferingUpdate(MediaPlayer mp, int percent) {
 		setBufferPosition(percent * getMusicDuration() / 100);
+	}
+
+	@Override
+	public void onCompletion(MediaPlayer mp) {
+		currentSongIndex++;
+		playSong(currentSongIndex);
 	}
 }

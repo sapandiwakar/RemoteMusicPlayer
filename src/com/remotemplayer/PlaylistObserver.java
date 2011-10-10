@@ -53,6 +53,8 @@ public class PlaylistObserver extends FileObserver {
 							line = buffreader.readLine();
 							if (line == null) {
 								flag = false;
+							} else if (line.length() == 0) {
+								continue;
 							}
 							playlist.add(line);
 						} catch (IOException e) {
