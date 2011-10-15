@@ -18,30 +18,26 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.webkit.WebView;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.MediaController;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.MediaController.MediaPlayerControl;
 import android.widget.SeekBar;
-import android.widget.TextView;
-import android.widget.ToggleButton;
 
 /**
  * @author Sapan
  */
 public class MusicActivity extends Activity implements MediaPlayerControl, SeekBar.OnSeekBarChangeListener {
 
-	MediaController ctrl;
-	ImageView songPicture;
+	// MediaController ctrl;
+	// ImageView songPicture;
 	String mUrl;
 	Resources res;
-	TextView songNameView;
-	TextView musicCurLoc;
-	TextView musicDuration;
-	SeekBar musicSeekBar;
-	ToggleButton playPauseButton;
-	ImageButton shuffleButton;
+	// TextView songNameView;
+	// TextView musicCurLoc;
+	// TextView musicDuration;
+	// SeekBar musicSeekBar;
+	// ToggleButton playPauseButton;
+	// ImageButton shuffleButton;
 
 	String mSongPicUrl = null;
 	private String mSongTitle = null;
@@ -52,45 +48,69 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.music);
 
-		shuffleButton = (ImageButton) findViewById(R.id.shufflebutton);
+		// shuffleButton = (ImageButton) findViewById(R.id.shufflebutton);
 
 		res = getResources(); // Resource object to get Drawables
 
-		songPicture = (ImageView) findViewById(R.id.thumbnail); // new ImageView(this);
-		songNameView = (TextView) findViewById(R.id.songName);
+		// songPicture = (ImageView) findViewById(R.id.thumbnail); // new ImageView(this);
+		// songNameView = (TextView) findViewById(R.id.songName);
+		//
+		// ctrl = new MediaController(this);
+		// ctrl.setMediaPlayer(this);
+		// ctrl.setAnchorView(songPicture);
 
-		ctrl = new MediaController(this);
-		ctrl.setMediaPlayer(this);
-		ctrl.setAnchorView(songPicture);
+		// musicCurLoc = (TextView) findViewById(R.id.musicCurrentLoc);
+		// musicDuration = (TextView) findViewById(R.id.musicDuration);
+		// musicSeekBar = (SeekBar) findViewById(R.id.musicSeekBar);
+		// playPauseButton = (ToggleButton) findViewById(R.id.playPauseButton);
+		// musicSeekBar.setOnSeekBarChangeListener(this);
 
-		musicCurLoc = (TextView) findViewById(R.id.musicCurrentLoc);
-		musicDuration = (TextView) findViewById(R.id.musicDuration);
-		musicSeekBar = (SeekBar) findViewById(R.id.musicSeekBar);
-		playPauseButton = (ToggleButton) findViewById(R.id.playPauseButton);
-		musicSeekBar.setOnSeekBarChangeListener(this);
+		Button confirmButton = (Button) findViewById(R.id.confirmButton);
 
-		playPauseButton.setOnClickListener(new OnClickListener() {
+		confirmButton.setOnClickListener(new OnClickListener() {
+
 			@Override
 			public void onClick(View v) {
-				// Perform action on clicks
-				if (playPauseButton.isChecked()) { // Checked -> Pause icon visible
-					start();
-				} else { // Unchecked -> Play icon visible
-					pause();
+				if (MusicService.getInstance() == null) {
+					return;
 				}
+				EditText musicPath = (EditText) findViewById(R.id.MuiscPathEditText);
+				EditText playlistPath = (EditText) findViewById(R.id.playlistPathEditText);
+				if (musicPath.getText() != null && musicPath.getText().length() > 0) {
+					Log.i("MusicActivity", "Changed the music path to " + musicPath.getText().toString());
+					MusicService.getInstance().setMusicPath(musicPath.getText().toString());
+				}
+
+				if (playlistPath.getText() != null && playlistPath.getText().length() > 0) {
+					Log.i("MusicActivity", "Changed the playlist path to " + playlistPath.getText().toString());
+					MusicService.getInstance().setPlaylistPath(playlistPath.getText().toString());
+				}
+
 			}
 		});
 
-		shuffleButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				shuffleNext();
-			}
-		});
+		// playPauseButton.setOnClickListener(new OnClickListener() {
+		// @Override
+		// public void onClick(View v) {
+		// // Perform action on clicks
+		// if (playPauseButton.isChecked()) { // Checked -> Pause icon visible
+		// start();
+		// } else { // Unchecked -> Play icon visible
+		// pause();
+		// }
+		// }
+		// });
+		//
+		// shuffleButton.setOnClickListener(new View.OnClickListener() {
+		// @Override
+		// public void onClick(View v) {
+		// shuffleNext();
+		// }
+		// });
 
-		WebView upNextSong = (WebView) findViewById(R.id.up_next_song);
-		upNextSong.getSettings().setJavaScriptEnabled(true);
-		upNextSong.loadUrl(res.getString(R.string.host) + "services/suggestion.php?v=2.0&a=suggestion.upnext");
+		// WebView upNextSong = (WebView) findViewById(R.id.up_next_song);
+		// upNextSong.getSettings().setJavaScriptEnabled(true);
+		// upNextSong.loadUrl(res.getString(R.string.host) + "services/suggestion.php?v=2.0&a=suggestion.upnext");
 
 		new Thread(new Runnable() {
 			@Override
@@ -110,23 +130,23 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 					final String totalTime = getAsTime(total);
 					final String curTime = getAsTime(currentPosition);
 
-					musicSeekBar.setMax(total);
-					musicSeekBar.setProgress(currentPosition);
-					musicSeekBar.setSecondaryProgress(getBufferPercentage());
+					// musicSeekBar.setMax(total);
+					// musicSeekBar.setProgress(currentPosition);
+					// musicSeekBar.setSecondaryProgress(getBufferPercentage());
 					runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							if (isPlaying()) {
-								if (!playPauseButton.isChecked()) {
-									playPauseButton.setChecked(true);
-								}
-							} else {
-								if (playPauseButton.isChecked()) {
-									playPauseButton.setChecked(false);
-								}
-							}
-							musicDuration.setText(totalTime);
-							musicCurLoc.setText(curTime);
+							// if (isPlaying()) {
+							// if (!playPauseButton.isChecked()) {
+							// playPauseButton.setChecked(true);
+							// }
+							// } else {
+							// if (playPauseButton.isChecked()) {
+							// playPauseButton.setChecked(false);
+							// }
+							// }
+							// musicDuration.setText(totalTime);
+							// musicCurLoc.setText(curTime);
 						}
 					});
 
@@ -138,7 +158,7 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 			// Service already running
 			try {
 				Bitmap bitmap = BitmapFactory.decodeStream((InputStream) new URL(MusicService.getInstance().getSongPicUrl()).getContent());
-				songPicture.setImageBitmap(bitmap);
+				// songPicture.setImageBitmap(bitmap);
 			} catch (MalformedURLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -147,12 +167,12 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 				e.printStackTrace();
 			}
 
-			songNameView.setText(MusicService.getInstance().getSongTitle());
+			// songNameView.setText(MusicService.getInstance().getSongTitle());
 
 			return;
 		} else {
-			songPicture.setImageDrawable(res.getDrawable(R.drawable.test));
-			songNameView.setText("Music Shuffle");
+			// songPicture.setImageDrawable(res.getDrawable(R.drawable.test));
+			// songNameView.setText("Music Shuffle");
 		}
 
 		mUrl = "http://www.vorbis.com/music/Epoq-Lepidoptera.ogg";
@@ -192,9 +212,9 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 				mSongPicUrl = musicDetails.getString("pic_url");
 				// MusicService.setSong(musicDetails.getString("link"), mSongTitle, mSongPicUrl);
 				Bitmap bitmap = BitmapFactory.decodeStream((InputStream) new URL(mSongPicUrl).getContent());
-				songPicture.setImageBitmap(bitmap);
+				// songPicture.setImageBitmap(bitmap);
 				MusicService.getInstance().restartMusic();
-				songNameView.setText(mSongTitle);
+				// songNameView.setText(mSongTitle);
 			}
 		} catch (JSONException e) {
 			Log.e("MusicActivity", "Link not found");

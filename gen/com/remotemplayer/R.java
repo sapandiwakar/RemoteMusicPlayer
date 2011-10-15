@@ -25,16 +25,12 @@ public final class R {
         public static final int test=0x7f02000b;
     }
     public static final class id {
-        public static final int activitywebview=0x7f05000a;
-        public static final int linearLayout1=0x7f050003;
-        public static final int musicCurrentLoc=0x7f050005;
-        public static final int musicDuration=0x7f050007;
-        public static final int musicSeekBar=0x7f050006;
-        public static final int playPauseButton=0x7f050004;
-        public static final int shufflebutton=0x7f050008;
-        public static final int songName=0x7f050002;
-        public static final int thumbnail=0x7f050001;
-        public static final int up_next_song=0x7f050009;
+        public static final int MuiscPathEditText=0x7f050004;
+        public static final int activitywebview=0x7f050006;
+        public static final int confirmButton=0x7f050005;
+        public static final int musicPathTextView=0x7f050003;
+        public static final int playlistPathEditText=0x7f050002;
+        public static final int playlistPathTextView=0x7f050001;
         public static final int webview=0x7f050000;
     }
     public static final class layout {
@@ -45,9 +41,12 @@ public final class R {
     }
     public static final class string {
         public static final int app_name=0x7f040001;
+        public static final int confirm=0x7f040007;
         public static final int hello=0x7f040000;
         public static final int host=0x7f040002;
         public static final int json=0x7f040004;
+        public static final int musicPath=0x7f040005;
+        public static final int playlistPath=0x7f040006;
         public static final int shuffle=0x7f040003;
     }
 }

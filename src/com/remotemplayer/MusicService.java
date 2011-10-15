@@ -24,8 +24,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		OnCompletionListener {
 
 	private static final String ACTION_PLAY = "PLAY";
-	private static final String PLAYLIST_PATH = "/sdcard/My SugarSync Folders/Uploaded by Email/playlist.txt";
-	private static final String MUSIC_PATH = "/sdcard/music/";
+	private static String playlistPath = "/sdcard/My SugarSync Folders/Uploaded by Email/";
+	private static String musicPath = "/sdcard/music/";
 
 	private static String mUrl;
 	// NotificationManager mNotificationManager;
@@ -88,10 +88,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 			// initMediaPlayer();
 		}
-		playlistObserver = new PlaylistObserver(PLAYLIST_PATH);
+		playlistObserver = new PlaylistObserver(playlistPath);
 		playlistObserver.setService(this);
 		playlistObserver.startWatching();
-		Log.i("MusicService", "STarted watching for file events");
+		Log.i("MusicService", "Started watching for file events at " + playlistPath);
 		return START_STICKY;
 	}
 
@@ -243,12 +243,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	private void playSong(int currentSongIndex) {
+		mMediaPlayer.reset();
 		if (currentSongIndex < playlist.size()) {
-			mUrl = this.MUSIC_PATH + playlist.get(currentSongIndex);
+			mUrl = this.musicPath + playlist.get(currentSongIndex);
 			File file = new File(mUrl);
 			if (file.exists()) {
+				Log.i("MusicService", "Now Playing: " + mUrl);
 				initMediaPlayer();
 			} else {
+				Log.i("MusicService", mUrl + " doesn't exist");
 				currentSongIndex++;
 				playSong(currentSongIndex);
 			}
@@ -310,5 +313,29 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	public void onCompletion(MediaPlayer mp) {
 		currentSongIndex++;
 		playSong(currentSongIndex);
+	}
+
+	public static String getPlaylistPath() {
+		return playlistPath;
+	}
+
+	public static void setPlaylistPath(String playlistPath) {
+		MusicService.playlistPath = playlistPath;
+		playlistObserver = new PlaylistObserver(playlistPath);
+		playlistObserver.setService(getInstance());
+		playlistObserver.startWatching();
+		Log.i("MusicService", "Started watching for file events at " + playlistPath);
+	}
+
+	public static String getMusicPath() {
+		return musicPath;
+	}
+
+	public static void setMusicPath(String musicPath) {
+		if (!musicPath.endsWith(File.pathSeparator)) {
+			musicPath.concat(File.pathSeparator);
+		}
+		MusicService.musicPath = musicPath;
+		Log.i("MusicService", "Music Path changed to " + musicPath);
 	}
 }
