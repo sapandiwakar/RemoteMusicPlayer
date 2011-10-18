@@ -58,12 +58,12 @@ public class PlaylistObserver extends FileObserver {
 		}
 		if (event == FileObserver.CREATE || event == FileObserver.CLOSE_WRITE) {
 			Log.i("PlaylistObserver", absolutePath + " modified");
-			readPlaylist(path);
+			readPlaylist(path, false);
 			// musicService.startMusic();
 		}
 	}
 
-	void readPlaylist(String path) {
+	public void readPlaylist(String path, boolean startPaused) {
 		InputStream instream;
 		try {
 			instream = new FileInputStream(absolutePath + path);
@@ -95,7 +95,7 @@ public class PlaylistObserver extends FileObserver {
 
 				} while (flag);
 
-				musicService.setPlaylist(playlist);
+				musicService.setPlaylist(playlist, startPaused);
 			}
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block

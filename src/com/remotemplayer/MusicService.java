@@ -9,7 +9,10 @@ import java.util.List;
 
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -38,6 +41,25 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private static PlaylistObserver playlistObserver;
 
 	private static MusicService mInstance = null;
+
+	private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context arg0, Intent intent) {
+			int level = intent.getIntExtra("level", 0);
+			int isPlugged = intent.getIntExtra("plugged", 0);
+
+			if (isPlugged != 0) {
+				if (mState == State.Stopped) {
+					MusicService.getInstance().playSong(currentSongIndex);
+					return;
+				}
+				MusicService.getInstance().startMusic();
+			} else {
+				MusicService.getInstance().pauseMusic();
+			}
+			Log.i("BatteryInfoReceiver", "" + isPlugged);
+		}
+	};
 
 	@Override
 	public void onCreate() {
@@ -74,6 +96,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private int mBufferPosition;
 	private List<String> playlist;
 	private int currentSongIndex;
+	private boolean batteryInfoReceiverRegistered = false;
 	private static String mSongTitle;
 	private static String mSongPicUrl;
 
@@ -92,6 +115,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		playlistObserver.setService(this);
 		playlistObserver.startWatching();
 		Log.i("MusicService", "Started watching for file events at " + playlistPath);
+
+		playlistObserver.readPlaylist(playlistPath + "/playlist.txt", true);
+
 		return START_STICKY;
 	}
 
@@ -228,18 +254,25 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		return false;
 	}
 
-	public void setPlaylist(List<String> playlist) {
+	public void setPlaylist(List<String> playlist, boolean startPaused) {
 		this.playlist = playlist;
-		startPlayingFromPlayList();
+		startPlayingFromPlayList(startPaused);
 	}
 
-	private void startPlayingFromPlayList() {
+	private void startPlayingFromPlayList(boolean startPaused) {
 		if (playlist.size() == 0) {
 			return;
 		}
 		currentSongIndex = 0;
-		playSong(currentSongIndex);
-
+		if (!startPaused) {
+			playSong(currentSongIndex);
+		} else {
+			mState = State.Stopped;
+		}
+		if (!batteryInfoReceiverRegistered) {
+			this.registerReceiver(this.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+			batteryInfoReceiverRegistered = true;
+		}
 	}
 
 	private void playSong(int currentSongIndex) {
