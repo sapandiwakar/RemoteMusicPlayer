@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,6 +16,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -29,25 +29,20 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private static final String ACTION_PLAY = "PLAY";
 	private static String playlistPath = "/sdcard/My SugarSync Folders/Uploaded by Email/";
 	private static String musicPath = "/sdcard/music/";
+	private String newsFlashPath = "/sdcard/newsflash/";
 
 	private static String mUrl;
-	// NotificationManager mNotificationManager;
-	// Notification mNotification = null;
 
-	// The ID we use for the notification (the onscreen alert that appears at the notification
-	// area at the top of the screen as an icon -- and as text as well if the user expands the
-	// notification area).
-	final int NOTIFICATION_ID = 1;
 	private static PlaylistObserver playlistObserver;
+	private static NewsFlashObserver newsFlashObserver;
 
 	private static MusicService mInstance = null;
 
 	private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context arg0, Intent intent) {
-			int level = intent.getIntExtra("level", 0);
 			int isPlugged = intent.getIntExtra("plugged", 0);
-
+			mBatInfoReceiver.setResultExtras(intent.getExtras());
 			if (isPlugged != 0) {
 				if (mState == State.Stopped) {
 					MusicService.getInstance().playSong(currentSongIndex);
@@ -111,12 +106,24 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 			// initMediaPlayer();
 		}
+
+		if (!batteryInfoReceiverRegistered) {
+			this.registerReceiver(this.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+			batteryInfoReceiverRegistered = true;
+		}
+
 		playlistObserver = new PlaylistObserver(playlistPath);
 		playlistObserver.setService(this);
 		playlistObserver.startWatching();
 		Log.i("MusicService", "Started watching for file events at " + playlistPath);
 
-		playlistObserver.readPlaylist(playlistPath + "/playlist.txt", true);
+		newsFlashObserver = new NewsFlashObserver(newsFlashPath);
+		newsFlashObserver.setService(this);
+		newsFlashObserver.startWatching();
+		Log.i("MusicService", "Started watching for file events at " + newsFlashPath);
+
+		Log.i("MusicService", "Now starting to read the initial playlist file");
+		playlistObserver.readPlaylist("playlist.txt");
 
 		return START_STICKY;
 	}
@@ -156,7 +163,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			mMediaPlayer.prepareAsync();
 		}
 		mState = State.Preparing;
-		setUpAsForeground(mSongTitle + " (loading)");
 	}
 
 	public void restartMusic() {
@@ -174,35 +180,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	public void onPrepared(MediaPlayer player) {
 		mState = State.Playing;
 		mMediaPlayer.start();
-		setUpAsForeground(mSongTitle + " (playing)");
-	}
-
-	/** Updates the notification. */
-	void updateNotification(String text) {
-		PendingIntent pi =
-				PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MusicActivity.class),
-						PendingIntent.FLAG_UPDATE_CURRENT);
-		// mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name), text,
-		// pi);
-		// mNotificationManager.notify(NOTIFICATION_ID, mNotification);
-	}
-
-	/**
-	 * Configures service as a foreground service. A foreground service is a service that's doing something the user is
-	 * actively aware of (such as playing music), and must appear to the user as a notification. That's why we create
-	 * the notification here.
-	 */
-	void setUpAsForeground(String text) {
-		PendingIntent pi =
-				PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MusicActivity.class),
-						PendingIntent.FLAG_UPDATE_CURRENT);
-		// mNotification = new Notification();
-		// mNotification.tickerText = text;
-		// mNotification.icon = R.drawable.ic_mshuffle_icon;
-		// mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		// mNotification.setLatestEventInfo(getApplicationContext(), getResources().getString(R.string.app_name), text,
-		// pi);
-		// startForeground(NOTIFICATION_ID, mNotification);
 	}
 
 	/**
@@ -235,7 +212,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		if (mState.equals(State.Playing)) {
 			mMediaPlayer.pause();
 			mState = State.Paused;
-			updateNotification(mSongTitle + " (paused)");
 		}
 	}
 
@@ -243,7 +219,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
 			mMediaPlayer.start();
 			mState = State.Playing;
-			updateNotification(mSongTitle + " (playing)");
 		}
 	}
 
@@ -254,28 +229,27 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		return false;
 	}
 
-	public void setPlaylist(List<String> playlist, boolean startPaused) {
+	public void setPlaylist(List<String> playlist) {
 		this.playlist = playlist;
-		startPlayingFromPlayList(startPaused);
+		startPlayingFromPlayList();
 	}
 
-	private void startPlayingFromPlayList(boolean startPaused) {
+	private void startPlayingFromPlayList() {
 		if (playlist.size() == 0) {
 			return;
 		}
 		currentSongIndex = 0;
-		if (!startPaused) {
-			playSong(currentSongIndex);
-		} else {
-			mState = State.Stopped;
-		}
-		if (!batteryInfoReceiverRegistered) {
-			this.registerReceiver(this.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-			batteryInfoReceiverRegistered = true;
-		}
+		playSong(currentSongIndex);
 	}
 
 	private void playSong(int currentSongIndex) {
+
+		Bundle m = mBatInfoReceiver.getResultExtras(true);
+		// Don't play song if charger is not plugged in
+		if (mBatInfoReceiver.getResultExtras(true).getInt("plugged") == 0) {
+			return;
+		}
+
 		mMediaPlayer.reset();
 		if (currentSongIndex < playlist.size()) {
 			mUrl = this.musicPath + playlist.get(currentSongIndex);
@@ -358,6 +332,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		playlistObserver.setService(getInstance());
 		playlistObserver.startWatching();
 		Log.i("MusicService", "Started watching for file events at " + playlistPath);
+
+		Log.i("MusicService", "Now starting to read the changed playlist file");
+		playlistObserver.readPlaylist("playlist.txt");
 	}
 
 	public static String getMusicPath() {
@@ -370,5 +347,29 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		}
 		MusicService.musicPath = musicPath;
 		Log.i("MusicService", "Music Path changed to " + musicPath);
+		if (getInstance().mState != State.Playing && getInstance().mState != State.Paused && getInstance().mState != State.Preparing) {
+			// Attemp to read the playlist again
+			playlistObserver.readPlaylist("playlist.txt");
+		}
+	}
+
+	public void setNextNewsFlash(String path) {
+		Log.i("MusicService", "New news flash found: " + path);
+		for (int i = currentSongIndex + 1; i < playlist.size(); ++i) {
+			if (playlist.get(i).contains("NewsFlash")) {
+				Log.i("MusicService", "Replacing newsflash #" + i + ": " + playlist.get(i) + " with new news flash: " + path);
+				playlist.set(i, path);
+				break;
+			}
+		}
+
+	}
+
+	public String getNewsFlashPath() {
+		return newsFlashPath;
+	}
+
+	public void setNewsFlashPath(String newsFlashPath) {
+		this.newsFlashPath = newsFlashPath;
 	}
 }
