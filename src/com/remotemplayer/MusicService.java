@@ -29,7 +29,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private static final String ACTION_PLAY = "PLAY";
 	private static String playlistPath = "/sdcard/My SugarSync Folders/Uploaded by Email/";
 	private static String musicPath = "/sdcard/music/";
-	private String newsFlashPath = "/sdcard/newsflash/";
+	private static String newsFlashPath = "/sdcard/newsflash/";
 
 	private static String mUrl;
 
@@ -92,6 +92,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private List<String> playlist;
 	private int currentSongIndex;
 	private boolean batteryInfoReceiverRegistered = false;
+	private boolean useNewsFlashPath = false;
 	private static String mSongTitle;
 	private static String mSongPicUrl;
 
@@ -252,7 +253,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 		mMediaPlayer.reset();
 		if (currentSongIndex < playlist.size()) {
-			mUrl = this.musicPath + playlist.get(currentSongIndex);
+			if (useNewsFlashPath && playlist.get(currentSongIndex).toLowerCase().contains("newsflash")) {
+				mUrl = this.newsFlashPath + playlist.get(currentSongIndex);
+				useNewsFlashPath = false;
+			} else {
+				mUrl = this.musicPath + playlist.get(currentSongIndex);
+			}
+
 			File file = new File(mUrl);
 			if (file.exists()) {
 				Log.i("MusicService", "Now Playing: " + mUrl);
@@ -290,7 +297,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		if (mState.equals(State.Playing) || mState.equals(State.Paused)) {
 			mMediaPlayer.seekTo(pos);
 		}
-
 	}
 
 	public static MusicService getInstance() {
@@ -356,13 +362,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	public void setNextNewsFlash(String path) {
 		Log.i("MusicService", "New news flash found: " + path);
 		for (int i = currentSongIndex + 1; i < playlist.size(); ++i) {
-			if (playlist.get(i).contains("NewsFlash")) {
+			if (playlist.get(i).toLowerCase().contains("newsflash")) {
 				Log.i("MusicService", "Replacing newsflash #" + i + ": " + playlist.get(i) + " with new news flash: " + path);
 				playlist.set(i, path);
+				useNewsFlashPath = true;
 				break;
 			}
 		}
-
 	}
 
 	public String getNewsFlashPath() {
