@@ -179,13 +179,14 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 
 		// MusicService.setSong(mUrl, "Temp Song", null);
 
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				startService(new Intent("PLAY"));
-			}
-		}).start();
+		if (MusicService.getInstance() == null) {
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					startService(new Intent("PLAY"));
+				}
+			}).start();
+		}
 
 	}
 
@@ -269,7 +270,7 @@ public class MusicActivity extends Activity implements MediaPlayerControl, SeekB
 	@Override
 	public int getDuration() {
 		if (MusicService.getInstance() != null) {
-			return MusicService.getInstance().getMusicDuration();
+			// return MusicService.getInstance().getMusicDuration();
 		}
 		return 0;
 	}

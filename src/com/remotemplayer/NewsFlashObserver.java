@@ -31,7 +31,7 @@ public class NewsFlashObserver extends FileObserver {
 	@Override
 	public void onEvent(int event, String path) {
 		if (event == FileObserver.ACCESS) {
-			Log.i("NewsFlashObserver", "Access");
+			// Log.i("NewsFlashObserver", "Access");
 		} else if (event == FileObserver.ATTRIB) {
 			Log.i("NewsFlashObserver", "Attrib");
 		} else if (event == FileObserver.CLOSE_NOWRITE) {

@@ -3,8 +3,14 @@
  */
 package com.remotemplayer;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.List;
 
 import android.app.Service;
@@ -23,10 +29,11 @@ import android.util.Log;
 /**
  * @author Sapan
  */
-public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnBufferingUpdateListener,
-		OnCompletionListener {
+public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, OnCompletionListener {
 
 	private static final String ACTION_PLAY = "PLAY";
+	private static final String APP_TEMP_PATH = "/sdcard/remotemplayer/";
+	private static final String MUSIC_PATH_FILE = "musicPath.txt";
 	private static String playlistPath = "/sdcard/My SugarSync Folders/Uploaded by Email/";
 	private static String musicPath = "/sdcard/music/";
 	private static String newsFlashPath = "/sdcard/newsflash/";
@@ -37,22 +44,28 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private static NewsFlashObserver newsFlashObserver;
 
 	private static MusicService mInstance = null;
+	private boolean batteryInfoReceiverEventReceived = false;
 
 	private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
+
 		@Override
 		public void onReceive(Context arg0, Intent intent) {
 			int isPlugged = intent.getIntExtra("plugged", 0);
 			mBatInfoReceiver.setResultExtras(intent.getExtras());
-			if (isPlugged != 0) {
-				if (mState == State.Stopped) {
-					MusicService.getInstance().playSong(currentSongIndex);
-					return;
+			batteryInfoReceiverEventReceived = true;
+			if (getInstance() != null && mMediaPlayer != null) {
+				if (isPlugged != 0) {
+					if (mState == State.Stopped) {
+						MusicService.getInstance().playSong(currentSongIndex);
+						return;
+					}
+					MusicService.getInstance().startMusic();
+				} else {
+					MusicService.getInstance().pauseMusic();
 				}
-				MusicService.getInstance().startMusic();
-			} else {
-				MusicService.getInstance().pauseMusic();
 			}
-			Log.i("BatteryInfoReceiver", "" + isPlugged);
+			Log.i("MusicService", "BatteryInfoReceiver " + isPlugged);
+
 		}
 	};
 
@@ -93,24 +106,40 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private int currentSongIndex;
 	private boolean batteryInfoReceiverRegistered = false;
 	private boolean useNewsFlashPath = false;
+	private int newsFlashIndex = -1;
 	private static String mSongTitle;
 	private static String mSongPicUrl;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent.getAction().equals(ACTION_PLAY)) {
-			mMediaPlayer = new MediaPlayer(); // initialize it here
-			mMediaPlayer.setOnPreparedListener(this);
-			mMediaPlayer.setOnCompletionListener(this);
-			mMediaPlayer.setOnErrorListener(this);
-			mMediaPlayer.setOnBufferingUpdateListener(this);
-			mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-			// initMediaPlayer();
-		}
-
+		// if (intent.getAction().equals(ACTION_PLAY)) {
 		if (!batteryInfoReceiverRegistered) {
 			this.registerReceiver(this.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 			batteryInfoReceiverRegistered = true;
+		}
+
+		mMediaPlayer = new MediaPlayer(); // initialize it here
+		mMediaPlayer.setOnPreparedListener(this);
+		mMediaPlayer.setOnCompletionListener(this);
+		mMediaPlayer.setOnErrorListener(this);
+		// mMediaPlayer.setOnBufferingUpdateListener(this);
+		mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		// initMediaPlayer();
+		// }
+
+		// ##### Read the file back in #####
+		Log.i("MusicService", "Trying to read music path from file");
+		try {
+			if (new File(APP_TEMP_PATH + MUSIC_PATH_FILE).exists()) {
+				FileInputStream fIn = new FileInputStream(new File(APP_TEMP_PATH + MUSIC_PATH_FILE));
+				InputStreamReader inputreader = new InputStreamReader(fIn);
+				BufferedReader in = new BufferedReader(inputreader);
+				String line = in.readLine();
+				Log.i("MusicService", line);
+				setMusicPath(line);
+			}
+		} catch (IOException ioe) {
+			Log.e("MusicService", "Unable to read music path from file", ioe);
 		}
 
 		playlistObserver = new PlaylistObserver(playlistPath);
@@ -231,12 +260,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public void setPlaylist(List<String> playlist) {
+		Log.i("MusicService", "Successfuly updated playlist");
 		this.playlist = playlist;
 		startPlayingFromPlayList();
 	}
 
 	private void startPlayingFromPlayList() {
 		if (playlist.size() == 0) {
+			Log.w("MusicService", "No song in playlist");
 			return;
 		}
 		currentSongIndex = 0;
@@ -245,19 +276,23 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	private void playSong(int currentSongIndex) {
 
-		Bundle m = mBatInfoReceiver.getResultExtras(true);
-		// Don't play song if charger is not plugged in
-		if (mBatInfoReceiver.getResultExtras(true).getInt("plugged") == 0) {
-			return;
+		if (batteryInfoReceiverEventReceived) {
+			Bundle m = mBatInfoReceiver.getResultExtras(true);
+			// Don't play song if charger is not plugged in
+			if (mBatInfoReceiver.getResultExtras(true).getInt("plugged") == 0) {
+				Log.w("MusicService", "Battery not plugged in. Stopping Mediaplayer");
+				return;
+			}
 		}
 
 		mMediaPlayer.reset();
 		if (currentSongIndex < playlist.size()) {
-			if (useNewsFlashPath && playlist.get(currentSongIndex).toLowerCase().contains("newsflash")) {
+			if (newsFlashIndex == currentSongIndex || useNewsFlashPath && playlist.get(currentSongIndex).toLowerCase().contains("newsflash")) {
 				mUrl = this.newsFlashPath + playlist.get(currentSongIndex);
 				useNewsFlashPath = false;
 			} else {
 				mUrl = this.musicPath + playlist.get(currentSongIndex);
+				Log.i("MusicService", "Trying to play song: " + mUrl);
 			}
 
 			File file = new File(mUrl);
@@ -265,19 +300,19 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 				Log.i("MusicService", "Now Playing: " + mUrl);
 				initMediaPlayer();
 			} else {
-				Log.i("MusicService", mUrl + " doesn't exist");
-				currentSongIndex++;
-				playSong(currentSongIndex);
+				Log.w("MusicService", mUrl + " doesn't exist");
+				this.currentSongIndex++;
+				playSong(this.currentSongIndex);
 			}
 		}
 	}
 
-	public int getMusicDuration() {
-		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
-			return mMediaPlayer.getDuration();
-		}
-		return 0;
-	}
+	// public int getMusicDuration() {
+	// if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
+	// return mMediaPlayer.getDuration();
+	// }
+	// return 0;
+	// }
 
 	public int getCurrentPosition() {
 		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
@@ -317,10 +352,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		return mSongPicUrl;
 	}
 
-	@Override
-	public void onBufferingUpdate(MediaPlayer mp, int percent) {
-		setBufferPosition(percent * getMusicDuration() / 100);
-	}
+	// @Override
+	// public void onBufferingUpdate(MediaPlayer mp, int percent) {
+	// setBufferPosition(percent * getMusicDuration() / 100);
+	// }
 
 	@Override
 	public void onCompletion(MediaPlayer mp) {
@@ -347,15 +382,44 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		return musicPath;
 	}
 
-	public static void setMusicPath(String musicPath) {
+	public void setMusicPath(String musicPath) {
 		if (!musicPath.endsWith(File.pathSeparator)) {
 			musicPath.concat(File.pathSeparator);
 		}
+
+		File musicPathFile = new File(APP_TEMP_PATH);
+		if (!musicPathFile.exists()) {
+
+			Log.i("MusicService", "Attempting to create dirs " + APP_TEMP_PATH);
+
+			if (musicPathFile.mkdirs()) {
+				Log.i("MusicService", "Created dirs " + APP_TEMP_PATH);
+			}
+		}
+
+		try {
+			FileOutputStream fOut = new FileOutputStream(APP_TEMP_PATH + MUSIC_PATH_FILE);
+			OutputStreamWriter osw = new OutputStreamWriter(fOut);
+			BufferedWriter writer = new BufferedWriter(osw);
+			writer.write(musicPath);
+			writer.close();
+			// osw.write(musicPath);
+			// osw.flush();
+			// osw.close();
+			Log.i("MusicService", "Music File created at " + APP_TEMP_PATH + MUSIC_PATH_FILE);
+		} catch (IOException e) {
+			Log.e("MusicService", "Cannot create music path file", e);
+		}
+
 		MusicService.musicPath = musicPath;
 		Log.i("MusicService", "Music Path changed to " + musicPath);
 		if (getInstance().mState != State.Playing && getInstance().mState != State.Paused && getInstance().mState != State.Preparing) {
-			// Attemp to read the playlist again
-			playlistObserver.readPlaylist("playlist.txt");
+			// Attempt to read the playlist again
+			if (playlistObserver == null) {
+				setPlaylistPath(playlistPath);
+			} else {
+				playlistObserver.readPlaylist("playlist.txt");
+			}
 		}
 	}
 
@@ -364,6 +428,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		for (int i = currentSongIndex + 1; i < playlist.size(); ++i) {
 			if (playlist.get(i).toLowerCase().contains("newsflash")) {
 				Log.i("MusicService", "Replacing newsflash #" + i + ": " + playlist.get(i) + " with new news flash: " + path);
+				newsFlashIndex = i;
 				playlist.set(i, path);
 				useNewsFlashPath = true;
 				break;

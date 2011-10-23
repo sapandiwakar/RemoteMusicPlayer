@@ -67,6 +67,8 @@ public class PlaylistObserver extends FileObserver {
 		InputStream instream;
 		try {
 			instream = new FileInputStream(absolutePath + path);
+
+			Log.i("PlaylistObserver", "Trying to read playlist at " + absolutePath + path);
 			// if file the available for reading
 			if (instream != null) {
 				// prepare the file for reading
@@ -89,17 +91,19 @@ public class PlaylistObserver extends FileObserver {
 						Log.i("PlaylistObserver", line + " added to playlist");
 						playlist.add(line);
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						Log.e("PlaylistObserver", "Unable to read playlist", e);
+						// e.printStackTrace();
 					}
 
 				} while (flag);
 
+				Log.i("PlaylistObserver", "Now trying to play from playlist");
 				musicService.setPlaylist(playlist);
+			} else {
+				Log.e("PlaylistObserver", "Playlist file not found");
 			}
 		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			Log.e("PlaylistObserver", "Unable to read playlist", e1);
 		}
 	}
 
