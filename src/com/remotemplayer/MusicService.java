@@ -34,6 +34,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private static final String ACTION_PLAY = "PLAY";
 	private static final String APP_TEMP_PATH = "/sdcard/remotemplayer/";
 	private static final String MUSIC_PATH_FILE = "musicPath.txt";
+	private static final String PLAYLIST_PATH_FILE = "playlistPath.txt";
 	private static String playlistPath = "/sdcard/My SugarSync Folders/Uploaded by Email/";
 	private static String musicPath = "/sdcard/music/";
 	private static String newsFlashPath = "/sdcard/newsflash/";
@@ -126,6 +127,21 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		// initMediaPlayer();
 		// }
+
+		// ##### Read the file back in #####
+		Log.i("MusicService", "Trying to read playlist path from file");
+		try {
+			if (new File(APP_TEMP_PATH + PLAYLIST_PATH_FILE).exists()) {
+				FileInputStream fIn = new FileInputStream(new File(APP_TEMP_PATH + PLAYLIST_PATH_FILE));
+				InputStreamReader inputreader = new InputStreamReader(fIn);
+				BufferedReader in = new BufferedReader(inputreader);
+				String line = in.readLine();
+				Log.i("MusicService", line);
+				setPlaylistPath(line);
+			}
+		} catch (IOException ioe) {
+			Log.e("MusicService", "Unable to read playlist path from file", ioe);
+		}
 
 		// ##### Read the file back in #####
 		Log.i("MusicService", "Trying to read music path from file");
@@ -369,6 +385,31 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	public static void setPlaylistPath(String playlistPath) {
 		MusicService.playlistPath = playlistPath;
+
+		File musicPathFile = new File(APP_TEMP_PATH);
+		if (!musicPathFile.exists()) {
+
+			Log.i("MusicService", "Attempting to create dirs " + APP_TEMP_PATH);
+
+			if (musicPathFile.mkdirs()) {
+				Log.i("MusicService", "Created dirs " + APP_TEMP_PATH);
+			}
+		}
+
+		try {
+			FileOutputStream fOut = new FileOutputStream(APP_TEMP_PATH + PLAYLIST_PATH_FILE);
+			OutputStreamWriter osw = new OutputStreamWriter(fOut);
+			BufferedWriter writer = new BufferedWriter(osw);
+			writer.write(playlistPath);
+			writer.close();
+			// osw.write(musicPath);
+			// osw.flush();
+			// osw.close();
+			Log.i("MusicService", "Playlist path File created at " + APP_TEMP_PATH + PLAYLIST_PATH_FILE);
+		} catch (IOException e) {
+			Log.e("MusicService", "Cannot create playlist path file", e);
+		}
+
 		playlistObserver = new PlaylistObserver(playlistPath);
 		playlistObserver.setService(getInstance());
 		playlistObserver.startWatching();
@@ -383,8 +424,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public void setMusicPath(String musicPath) {
-		if (!musicPath.endsWith(File.pathSeparator)) {
-			musicPath.concat(File.pathSeparator);
+		if (!musicPath.endsWith(File.separator)) {
+			musicPath.concat(File.separator);
 		}
 
 		File musicPathFile = new File(APP_TEMP_PATH);
@@ -413,14 +454,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 		MusicService.musicPath = musicPath;
 		Log.i("MusicService", "Music Path changed to " + musicPath);
-		if (getInstance().mState != State.Playing && getInstance().mState != State.Paused && getInstance().mState != State.Preparing) {
-			// Attempt to read the playlist again
-			if (playlistObserver == null) {
-				setPlaylistPath(playlistPath);
-			} else {
-				playlistObserver.readPlaylist("playlist.txt");
-			}
+		// if (getInstance().mState != State.Playing && getInstance().mState != State.Paused && getInstance().mState !=
+		// State.Preparing) {
+		// Attempt to read the playlist again
+		if (playlistObserver == null) {
+			setPlaylistPath(playlistPath);
+		} else {
+			playlistObserver.readPlaylist("playlist.txt");
 		}
+		// }
 	}
 
 	public void setNextNewsFlash(String path) {
