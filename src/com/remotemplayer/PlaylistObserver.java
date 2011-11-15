@@ -58,7 +58,12 @@ public class PlaylistObserver extends FileObserver {
 		}
 		if (event == FileObserver.CREATE || event == FileObserver.CLOSE_WRITE) {
 			Log.i("PlaylistObserver", absolutePath + " modified");
-			readPlaylist(path);
+			// Check for txt files
+			// Sugarsync creates temp files in directory
+			if (path.endsWith(".txt")) {
+				readPlaylist(path);
+			}
+
 			// musicService.startMusic();
 		}
 	}

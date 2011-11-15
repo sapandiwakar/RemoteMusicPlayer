@@ -302,6 +302,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		}
 
 		mMediaPlayer.reset();
+
+		// Restart playlist from beginning
+		if (currentSongIndex == playlist.size()) {
+			this.currentSongIndex = 0;
+			currentSongIndex = 0;
+		}
+
 		if (currentSongIndex < playlist.size()) {
 			if (newsFlashIndex == currentSongIndex || useNewsFlashPath && playlist.get(currentSongIndex).toLowerCase().contains("newsflash")) {
 				mUrl = this.newsFlashPath + playlist.get(currentSongIndex);
