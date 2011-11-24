@@ -22,7 +22,6 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Binder;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -46,22 +45,30 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	private static MusicService mInstance = null;
 	private boolean batteryInfoReceiverEventReceived = false;
+	private boolean isCharging = false;
 
 	private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
 
 		@Override
 		public void onReceive(Context arg0, Intent intent) {
 			int isPlugged = intent.getIntExtra("plugged", 0);
-			mBatInfoReceiver.setResultExtras(intent.getExtras());
+			// mBatInfoReceiver.setResultExtras(intent.getExtras());
 			batteryInfoReceiverEventReceived = true;
+			if (isPlugged != 0) {
+				isCharging = true;
+			} else {
+				isCharging = false;
+			}
 			if (getInstance() != null && mMediaPlayer != null) {
 				if (isPlugged != 0) {
+					isCharging = true;
 					if (mState == State.Stopped) {
 						MusicService.getInstance().playSong(currentSongIndex);
 						return;
 					}
 					MusicService.getInstance().startMusic();
 				} else {
+					isCharging = false;
 					MusicService.getInstance().pauseMusic();
 				}
 			}
@@ -262,7 +269,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public void startMusic() {
-		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving)) {
+		if (!mState.equals(State.Preparing) && !mState.equals(State.Retrieving) && !mState.equals(State.Playing)) {
 			mMediaPlayer.start();
 			mState = State.Playing;
 		}
@@ -293,9 +300,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private void playSong(int currentSongIndex) {
 
 		if (batteryInfoReceiverEventReceived) {
-			Bundle m = mBatInfoReceiver.getResultExtras(true);
+
+			// Bundle m = mBatInfoReceiver.getResultExtras(true);
 			// Don't play song if charger is not plugged in
-			if (mBatInfoReceiver.getResultExtras(true).getInt("plugged") == 0) {
+			// if (mBatInfoReceiver.getResultExtras(true).getInt("plugged") == 0) {
+			if (!isCharging) {
 				Log.w("MusicService", "Battery not plugged in. Stopping Mediaplayer");
 				return;
 			}
